@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Student Management System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .auth-card {
+      max-width: 400px;
+      margin: auto;
+      margin-top: 10vh;
+      padding: 2rem;
+      background-color: #fff;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .dashboard-header {
+      background: #a522c3;
+      background: linear-gradient(0deg,rgba(165, 34, 195, 1) 0%, rgba(62, 45, 253, 1) 100%);
+      color: white;
+      padding: 1rem;
+      height: 100px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Authentication Forms -->
+  <div id="authSection">
+    <div class="auth-card">
+      <h3 class="text-center mb-4">Student Management System</h3>
+      <ul class="nav nav-tabs" id="authTabs" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button">Login</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button">Register</button>
+        </li>
+      </ul>
+      <div class="tab-content mt-3" id="authTabsContent">
+        <!-- Login -->
+        <div class="tab-pane fade show active" id="login">
+          <form id="loginForm">
+            <div class="mb-3">
+              <label for="loginUsername" class="form-label">Username</label>
+              <input type="text" class="form-control" id="loginUsername" required />
+            </div>
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="loginPassword" required />
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+            <div id="loginError" class="text-danger mt-2"></div>
+          </form>
+        </div>
+        <!-- Register -->
+        <div class="tab-pane fade" id="register">
+          <form id="registerForm">
+            <div class="mb-3">
+              <label for="registerUsername" class="form-label">Username</label>
+              <input type="text" class="form-control" id="registerUsername" required />
+            </div>
+            <div class="mb-3">
+              <label for="registerPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="registerPassword" required />
+            </div>
+            <button type="submit" class="btn btn-success w-100">Register</button>
+            <div id="registerError" class="text-danger mt-2"></div>
+            <div id="registerSuccess" class="text-success mt-2"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboardSection" class="d-none">
+    <div class="dashboard-header d-flex justify-content-between align-items-center">
+      <h4>Dashboard</h4>
+      <button id="logoutBtn" class="btn btn-light btn-sm">Logout</button>
+    </div>
+    <div class="container py-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5>Student Records</h5>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#studentModal">Add Student</button>
+      </div>
+      <table class="table table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Name</th><th>Age</th><th>Year Level</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="studentsTable">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Student Modal -->
+  <div class="modal fade" id="studentModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="studentForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="studentModalLabel">Add Student</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="studentId" />
+            <div class="mb-3">
+              <label for="studentName" class="form-label">Name</label>
+              <input type="text" class="form-control" id="studentName" required />
+            </div>
+            <div class="mb-3">
+              <label for="studentAge" class="form-label">Age</label>
+              <input type="number" class="form-control" id="studentAge" required min="1" />
+            </div>
+            <div class="mb-3">
+              <label for="studentGrade" class="form-label">Year-Level</label>
+              <input type="text" class="form-control" id="studentGrade" required />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const apiBase = 'http://localhost:5000/api';
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const loginError = document.getElementById('loginError');
+    const registerError = document.getElementById('registerError');
+    const registerSuccess = document.getElementById('registerSuccess');
+    const authSection = document.getElementById('authSection');
+    const dashboardSection = document.getElementById('dashboardSection');
+    const studentsTable = document.getElementById('studentsTable');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const studentForm = document.getElementById('studentForm');
+    const studentModal = new bootstrap.Modal(document.getElementById('studentModal'));
+    let token = null;
+
+    function showDashboard() {
+      authSection.classList.add('d-none');
+      dashboardSection.classList.remove('d-none');
+      loadStudents();
+    }
+
+    function showAuth() {
+      authSection.classList.remove('d-none');
+      dashboardSection.classList.add('d-none');
+      token = null;
+      loginForm.reset(); registerForm.reset(); studentForm.reset();
+      loginError.textContent = ''; registerError.textContent = ''; registerSuccess.textContent = '';
+    }
+
+    loginForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const res = await fetch(apiBase + '/login', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: loginForm.loginUsername.value, password: loginForm.loginPassword.value})
+      });
+      const data = await res.json();
+      if (res.ok) { token = data.token; showDashboard(); } else { loginError.textContent = data.error || 'Login failed'; }
+    });
+
+    registerForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const res = await fetch(apiBase + '/register', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username: registerForm.registerUsername.value, password: registerForm.registerPassword.value})
+      });
+      const data = await res.json();
+      if (res.ok) { registerSuccess.textContent = 'Registered successfully! You can now login.'; registerForm.reset(); }
+      else { registerError.textContent = data.error || 'Registration failed'; }
+    });
+
+    logoutBtn.addEventListener('click', showAuth);
+
+    async function loadStudents() {
+      const res = await fetch(apiBase + '/students', {headers: {Authorization: token}});
+      const data = await res.json();
+      studentsTable.innerHTML = data.map(s => `
+        <tr>
+          <td>${s.name}</td>
+          <td>${s.age}</td>
+          <td>${s.grade}</td>
+          <td>
+            <button class="btn btn-sm btn-warning me-1" onclick="editStudent(${s.id}, '${s.name}', ${s.age}, '${s.grade}')">Edit</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.id})">Delete</button>
+          </td>
+        </tr>`).join('');
+    }
+
+    window.editStudent = (id, name, age, grade) => {
+      studentForm.studentId.value = id; studentForm.studentName.value = name;
+      studentForm.studentAge.value = age; studentForm.studentGrade.value = grade;
+      studentModal.show();
+    };
+
+    window.deleteStudent = async (id) => {
+      if (confirm('Delete this student?')) {
+        await fetch(apiBase + '/students/' + id, {method: 'DELETE', headers: {Authorization: token}});
+        loadStudents();
+      }
+    };
+
+    studentForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = studentForm.studentId.value;
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `${apiBase}/students/${id}` : `${apiBase}/students`;
+      const res = await fetch(url, {
+        method, headers: {'Content-Type': 'application/json', Authorization: token},
+        body: JSON.stringify({name: studentForm.studentName.value, age: +studentForm.studentAge.value, grade: studentForm.studentGrade.value})
+      });
+      if (res.ok) { studentModal.hide(); loadStudents(); } else { alert('Error saving student.'); }
+    });
+  </script>
+</body>
+</html>
